@@ -17,4 +17,4 @@ Untuk menjalankannya di komputer lokal Anda :
 ## FAQ
 Q: Kak ini ada error : "1) Tests\Browser\ExampleTest::testBasicExample
 Facebook\WebDriver\Exception\SessionNotCreatedException: session not created: This version of ChromeDriver only supports Chrome version  70 and 73" solusinya bagaimana ya?
-A: Ketik `php artisan dusk:chrome-driver` di Terminal, kemudian Update Google Chrome Anda dengan cara : Klik tiga titik menurun pada Google Chrome (pojok kanan atas), pilih Help (Bantuan) -> pilih About Google Chrome (Tentang Google Chrome) -> Tunggu hingga update selesai -> Relaunch Google Chrome. Dan coba jalankan Testing sesuai dengan modul.
+<br> A: Ketik `php artisan dusk:chrome-driver` di Terminal, kemudian Update Google Chrome Anda dengan cara : Klik tiga titik menurun pada Google Chrome (pojok kanan atas), pilih Help (Bantuan) -> pilih About Google Chrome (Tentang Google Chrome) -> Tunggu hingga update selesai -> Relaunch Google Chrome. Dan coba jalankan Testing sesuai dengan modul.
