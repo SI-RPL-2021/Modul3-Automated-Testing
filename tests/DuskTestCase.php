@@ -2,14 +2,17 @@
 
 namespace Tests;
 
+use Derekmd\Dusk\Concerns\TogglesHeadlessMode;
+use Derekmd\Dusk\Firefox\SupportsFirefox;
 use Facebook\WebDriver\Chrome\ChromeOptions;
+use Facebook\WebDriver\Firefox\FirefoxDriver;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\TestCase as BaseTestCase;
 
 abstract class DuskTestCase extends BaseTestCase
 {
-    use CreatesApplication;
+    use CreatesApplication, SupportsFirefox, TogglesHeadlessMode;
 
     /**
      * Prepare for Dusk test execution.
@@ -19,8 +22,14 @@ abstract class DuskTestCase extends BaseTestCase
      */
     public static function prepare()
     {
-        if (! static::runningInSail()) {
+        if (static::runningFirefoxInSail()) {
+            return;
+        }
+
+        if (env('DUSK_CHROME')) {
             static::startChromeDriver();
+        } else {
+            static::startFirefoxDriver();
         }
     }
 
@@ -31,14 +40,24 @@ abstract class DuskTestCase extends BaseTestCase
      */
     protected function driver()
     {
-        $options = (new ChromeOptions)->addArguments(collect([
+        if (env('DUSK_CHROME')) {
+            return $this->chromeDriver();
+        }
+
+        return $this->firefoxDriver();
+    }
+
+    /**
+     * Create the ChromeDriver instance.
+     *
+     * @return \Facebook\WebDriver\Remote\RemoteWebDriver
+     */
+    protected function chromeDriver()
+    {
+        $options = (new ChromeOptions)->addArguments($this->filterHeadlessArguments([
+            '--disable-gpu',
             '--window-size=1920,1080',
-        ])->unless($this->hasHeadlessDisabled(), function ($items) {
-            return $items->merge([
-                '--disable-gpu',
-                '--headless',
-            ]);
-        })->all());
+        ]));
 
         return RemoteWebDriver::create(
             $_ENV['DUSK_DRIVER_URL'] ?? 'http://localhost:9515',
@@ -49,13 +68,27 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
-     * Determine whether the Dusk command has disabled headless mode.
+     * Create the Geckodriver instance.
      *
-     * @return bool
+     * @return \Facebook\WebDriver\Remote\RemoteWebDriver
      */
-    protected function hasHeadlessDisabled()
+    protected function firefoxDriver()
     {
-        return isset($_SERVER['DUSK_HEADLESS_DISABLED']) ||
-               isset($_ENV['DUSK_HEADLESS_DISABLED']);
+        $options = [
+            'args' => $this->filterHeadlessArguments([
+                '--window-size=1920,1080',
+            ]),
+        ];
+
+        $capabilities = DesiredCapabilities::firefox()
+            ->setCapability('moz:firefoxOptions', $options);
+
+        $capabilities->getCapability(FirefoxDriver::PROFILE)
+            ->setPreference('devtools.console.stdout.content', true);
+
+        return RemoteWebDriver::create(
+            $_ENV['DUSK_DRIVER_URL'] ?? 'http://localhost:4444',
+            $capabilities
+        );
     }
 }
